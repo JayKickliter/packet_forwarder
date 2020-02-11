@@ -1380,9 +1380,9 @@ int main(void)
         if (gps_enabled == true) {
             /* no need for mutex, display is not critical */
             if (gps_ref_valid == true) {
-                printf("# Valid time reference (age: %li sec)\n", (long)difftime(time(NULL), time_reference_gps.systime));
+                printf("# Valid time reference (age: %li sec) (accuracy: %li ns)\n", (long)difftime(time(NULL), time_reference_gps.systime), time_reference_gps.gps_acc.tv_nsec);
             } else {
-                printf("# Invalid time reference (age: %li sec)\n", (long)difftime(time(NULL), time_reference_gps.systime));
+                printf("# Invalid time reference (age: %li sec)  (accuracy: %li ns)\n", (long)difftime(time(NULL), time_reference_gps.systime), time_reference_gps.gps_acc.tv_nsec);
             }
             if (coord_ok == true) {
                 printf("# GPS coordinates: latitude %.5f, longitude %.5f, altitude %i m\n", cp_gps_coord.lat, cp_gps_coord.lon, cp_gps_coord.alt);
@@ -2662,9 +2662,10 @@ void thread_jit(void) {
 
 static void gps_process_sync(void) {
     struct timespec gps_time;
+    struct timespec gps_time_acc;
     struct timespec utc;
     uint32_t trig_tstamp; /* concentrator timestamp associated with PPM pulse */
-    int i = lgw_gps_get(&utc, &gps_time, NULL, NULL);
+    int i = lgw_gps_get(&utc, &gps_time, &gps_time_acc, NULL, NULL);
 
     /* get GPS time for synchronization */
     if (i != LGW_GPS_SUCCESS) {
@@ -2694,7 +2695,7 @@ static void gps_process_coords(void) {
     /* position variable */
     struct coord_s coord;
     struct coord_s gpserr;
-    int    i = lgw_gps_get(NULL, NULL, &coord, &gpserr);
+    int    i = lgw_gps_get(NULL, NULL, NULL, &coord, &gpserr);
 
     /* update gateway coordinates */
     pthread_mutex_lock(&mx_meas_gps);
